@@ -54,7 +54,7 @@ public class ConversationEvent implements Externalizable {
 
     public void run(ConversationManager conversationManager) {
         if (Type.chatMessageReceived == type) {
-            conversationManager.processMessage(sender, receiver, body, "", date);
+            conversationManager.processMessage(sender, receiver, body, stanza, date);
         }
         else if (Type.roomDestroyed == type) {
             conversationManager.roomConversationEnded(roomJID, date);
@@ -96,6 +96,11 @@ public class ConversationEvent implements Externalizable {
             ExternalizableUtil.getInstance().writeSafeUTF(out, body);
         }
 
+        ExternalizableUtil.getInstance().writeBoolean(out, stanza != null);
+        if (stanza != null) {
+            ExternalizableUtil.getInstance().writeSafeUTF(out, stanza);
+        }
+
         ExternalizableUtil.getInstance().writeBoolean(out, roomJID != null);
         if (roomJID != null) {
             ExternalizableUtil.getInstance().writeSerializable(out, roomJID);
@@ -123,6 +128,9 @@ public class ConversationEvent implements Externalizable {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             body = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            stanza = ExternalizableUtil.getInstance().readSafeUTF(in);
+        }
 
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             roomJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
@@ -135,12 +143,14 @@ public class ConversationEvent implements Externalizable {
         }
     }
 
-    public static ConversationEvent chatMessageReceived(JID sender, JID receiver, String body, Date date) {
+    public static ConversationEvent chatMessageReceived(JID sender, JID receiver, String body,
+                                                        String stanza, Date date) {
         ConversationEvent event = new ConversationEvent();
         event.type = Type.chatMessageReceived;
         event.sender = sender;
         event.receiver = receiver;
         event.body = body;
+        event.stanza = stanza;
         event.date = date;
         return event;
     }
